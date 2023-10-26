@@ -198,11 +198,11 @@ unsigned char State0;
 		}
 	PreviousState = State0;
 	CntVel++;
-	if (CountValue>=4000) {
+	if (CountValue>=2000) {
 		CountValue = 0;
 		PosCnt++;
 	}
-	else if	(CountValue<=-4000) {
+	else if	(CountValue<=-2000) {
 		CountValue = 0;
 		PosCnt--;
 	}
