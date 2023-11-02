@@ -264,8 +264,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {	// ngat timer 4 ti
 		CurPos = PosCnt*2*pi+CountValue*p2r;	// Position calculation
 		Cnttmp = CntVel;
 		CntVel = 0;
-		RealVel = Cnttmp*3;										//RPM
-		CurVel = Cnttmp*pi/10;								//rad/s
+		RealVel = Cnttmp*6;										//RPM
+		CurVel = Cnttmp*pi/5;								//rad/s
 		switch(Speedmode) {
 			case 1:
 				pwm = SetVelLow(CurPos,DesiredPos);
@@ -357,7 +357,20 @@ void test_dc_motor_on(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
 
   // Turn on PWM
-  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,7); // set pwm
+  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,99); // set pwm
+}
+
+/**
+ * @brief Turn off DC motor and test
+ * 
+ */
+void test_dc_motor_off(void)
+{
+  // Turn on PC3
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+
+  // Turn on PWM
+  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,0); // set pwm
 }
 
 void test_motor_control(enum_dir_t direction, uint8_t pwm, uint32_t time)
@@ -421,12 +434,19 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim5);						// khoi tao timer 5
 	HAL_UART_Receive_IT(&huart1,(uint8_t*)Rx_data,1);	
   /* USER CODE END 2 */
-  test_dc_motor_on();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
+    if (run == true)
+    {
+      test_dc_motor_on();
+    }
+    else
+    {
+      test_dc_motor_off();
+    }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
