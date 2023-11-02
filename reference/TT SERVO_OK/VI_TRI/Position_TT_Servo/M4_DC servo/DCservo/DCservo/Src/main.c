@@ -82,12 +82,6 @@ uint8_t PreviousState,pwm,Speedmode,tick=0;
 bool run=false, dir;
 float CurPos=0,DesiredPos,CurVel;	
 char Rx_indx, Rx_Buffer[20],Rx_data[2];
-
-typedef enum
-{
-  RIGHT_DIRECTION,
-  LEFT_DIRECTION
-} enum_dir_t;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -170,56 +164,32 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 				HAL_UART_Receive_IT(&huart1,(uint8_t*)Rx_data,1);
 		}
 	}
-
+/**
+* @brief This function handles EXTI line[15:10] interrupts.
+*/
 void EXTI9_5_IRQHandler(void)	// doc encoder	
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
-unsigned char State0;
-	State0 = (State0<<1) | HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4);
-	State0 = (State0<<1) | HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6);
-	State0 = State0&0x03;
-	switch (State0) {
-		case 0:
-			if(PreviousState==1) CountValue++;
-			else CountValue--;
-		break;
-		case 1:
-			if(PreviousState==3) CountValue++;
-			else CountValue--;
-		break;
-		case 2:
-			if(PreviousState==0) CountValue++;
-			else CountValue--;
-		break;
-		case 3:
-			if(PreviousState==2) CountValue++;
-			else CountValue--;
-		break;
-		}
-	PreviousState = State0;
-	CntVel++;
-	if (CountValue>=2000) {
-		CountValue = 0;
-		PosCnt++;
-	}
-	else if	(CountValue<=-2000) {
-		CountValue = 0;
-		PosCnt--;
-	}
-  /* USER CODE END EXTI4_IRQn 0 */
+	
+	
+	// STUDENTS ADD CODES FOR CHANNEL B HERE
+	
+	
+  /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
-  /* USER CODE BEGIN EXTI4_IRQn 1 */
+  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
+  /* USER CODE END EXTI9_5_IRQn 1 */
 }
 
 /**
 * @brief This function handles EXTI line3 interrupt.
 */
-void EXTI4_IRQHandler(void)	// doc encoder	
+void EXTI3_IRQHandler(void)	// doc encoder	
 {
-  /* USER CODE BEGIN EXTI4_IRQn 0 */
+  /* USER CODE BEGIN EXTI3_IRQn 0 */
 	// CHANNEL A
 unsigned char State1;
-	State1 = (State1<<1) | HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4);
+	State1 = (State1<<1) | HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_3);
 	State1 = (State1<<1) | HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6);
 	State1 = State1&0x03;
 	switch (State1) {
@@ -242,16 +212,16 @@ unsigned char State1;
 		}
 	PreviousState = State1;
 	CntVel++;
-	if (CountValue>=2000) {
+	if (CountValue>=4000) {
 		CountValue = 0;
 		PosCnt++;
 	}
-	else if	(CountValue<=-2000) {
+	else if	(CountValue<=-4000) {
 		CountValue = 0;
 		PosCnt--;
 	}
   /* USER CODE END EXTI3_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
   /* USER CODE BEGIN EXTI3_IRQn 1 */
 
   /* USER CODE END EXTI3_IRQn 1 */
@@ -277,17 +247,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {	// ngat timer 4 ti
 				pwm = SetVelHigh(CurPos,DesiredPos,CurVel);
 				break;				
 		}
-		// // dir = 1, CurPos<0
-		// if (dir==1){
-		// //	__HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_3,0); // dir
-		// 		HAL_GPIO_WritePin(GPIOC,GPIO_PIN_3, GPIO_PIN_SET); 
-		// 	__HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_2,pwm); 	// set pwm
-		// }
-		// else {
-		// 		HAL_GPIO_WritePin(GPIOC,GPIO_PIN_3, GPIO_PIN_RESET); 
-		// 	//__HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_3,0); // set pwm
-		// 	__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,pwm); // set pwm
-		// }	
+		// dir = 1, CurPos<0
+		if (dir==1){
+		//	__HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_3,0); // dir
+				HAL_GPIO_WritePin(GPIOC,GPIO_PIN_3, GPIO_PIN_SET); 
+			__HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_2,pwm); 	// set pwm
+		}
+		else {
+				HAL_GPIO_WritePin(GPIOC,GPIO_PIN_3, GPIO_PIN_RESET); 
+			//__HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_3,0); // set pwm
+			__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,pwm); // set pwm
+		}	
 		return;
 	}
 	if(htim->Instance==TIM5)
@@ -346,39 +316,6 @@ int SetVelHigh(float CurrentPos, float Pos, float CurrentVel)
 	
 	return uout;
 }
-
-/**
- * @brief Turn on DC motor and test
- * 
- */
-void test_dc_motor_on(void)
-{
-  // Turn on PC3
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
-
-  // Turn on PWM
-  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,7); // set pwm
-}
-
-void test_motor_control(enum_dir_t direction, uint8_t pwm, uint32_t time)
-{
-  // Turn on PC3
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, (uint8_t)(direction));
-
-  // Turn on PWM
-  if (pwm > 100) 
-  {
-    pwm = 100;
-  }
-  else if (pwm < 0)
-  {
-    pwm = 0;
-  }
-  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,pwm); // set pwm
-  HAL_Delay(time);
-  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,0); // set pwm
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -415,18 +352,19 @@ int main(void)
   MX_TIM4_Init();
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
-	//HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);	// khoi tao timer 2
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);	// khoi tao timer 2
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);	// khoi tao timer 3
 	HAL_TIM_Base_Start_IT(&htim4);						// khoi tao timer 4
 	HAL_TIM_Base_Start_IT(&htim5);						// khoi tao timer 5
 	HAL_UART_Receive_IT(&huart1,(uint8_t*)Rx_data,1);	
   /* USER CODE END 2 */
-  test_dc_motor_on();
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -441,7 +379,7 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /**Initializes the CPU, AHB and APB busses clocks
+  /**Initializes the CPU, AHB and APB busses clocks 
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -453,7 +391,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /**Initializes the CPU, AHB and APB busses clocks
+  /**Initializes the CPU, AHB and APB busses clocks 
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -700,8 +638,8 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
@@ -713,15 +651,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB4 PB6 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_6;
+  /*Configure GPIO pin : PA3 */
+  GPIO_InitStruct.Pin = GPIO_PIN_3;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB6 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
@@ -753,7 +697,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{
+{ 
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
