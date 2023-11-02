@@ -357,7 +357,7 @@ void test_dc_motor_on(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
 
   // Turn on PWM
-  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,49); // set pwm
+  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,99); // set pwm
 }
 
 /**
