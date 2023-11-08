@@ -47,6 +47,7 @@
 #include "stdio.h" 
 #include "stdlib.h"
 #include "stdbool.h"
+#include "stdint.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,10 +56,21 @@
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
 #define pi 3.1415
 #define p2r pi/2000
-#define Kp 33.54
+
+#define Kp 11.246
+#define Ki 0
+#define Kd 0.11246
+#define dt 0.005
+
+#define MAX_PWM 99
+#define MIN_PWM 0
+
+/* USER CODE BEGIN PD */
+float integral = 0.0;  // Giá trị tích phân
+float prev_error = 0.0;  // Sai số trước đó
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -118,7 +130,39 @@ int SetVelHigh(float CurrentPos, float Pos, float CurrentVel);
 		HAL_UART_Transmit(&huart1, (uint8_t*)&ch,1,100);
 		return ch;
 	}
-	
+
+uint8_t PID(float pos_sp, float pos_cv)
+{
+  // Tinh sai so hien tai
+  float error = pos_sp - pos_cv;
+
+  // Tinh sai so tuong lai
+  float proportional = Kp * error;
+  integral += Ki * error * dt;
+
+  // Tinh sai so qua khu 
+  float derivative = Kd * (error - prev_error) / dt;
+
+  // Tinh MV
+  uint8_t mv = (uint8_t)(proportional + integral + derivative);
+
+  // Cap nhat gia tri error
+  prev_error = error;
+
+  // Anti-windup
+  if (mv > 99) 
+  {
+    mv = 99;
+  }
+  else if (mv < 0)
+  {
+    mv = 0;
+  }
+
+  // Return value
+  return mv;
+}
+
 	// Ham ngat Uart
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
