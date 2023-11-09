@@ -153,22 +153,22 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DesiredPos</ItemText>
+          <ItemText>mv_pwm,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>CurPos</ItemText>
+          <ItemText>cv_rad</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>CountValue,0x0A</ItemText>
+          <ItemText>setpoint</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
           <WinNumber>1</WinNumber>
-          <ItemText>PosCnt,0x0A</ItemText>
+          <ItemText>setpoint*2*3.14/60.0</ItemText>
         </Ww>
         <Ww>
           <count>4</count>

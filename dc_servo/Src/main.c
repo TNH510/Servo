@@ -66,8 +66,8 @@
 // #define dt 0.005
 
 // PID van toc
-#define Kp 10 
-#define Ki 0
+#define Kp 0.8 
+#define Ki 0.1
 #define Kd 0
 #define dt 0.005
 
@@ -77,6 +77,7 @@
 /* USER CODE BEGIN PD */
 float integral = 0.0;  // Giá trị tích phân
 float prev_error = 0.0;  // Sai số trước đó
+int16_t mv_pwm;
 
 /* USER CODE END PD */
 
@@ -101,6 +102,9 @@ uint8_t PreviousState,pwm,Speedmode,tick=0;
 bool run=false, dir;
 float CurPos=0,DesiredPos,CurVel;	
 char Rx_indx, Rx_Buffer[20],Rx_data[2];
+
+float cv_rad;
+float setpoint = 380;
 
 typedef enum
 {
@@ -138,7 +142,7 @@ int SetVelHigh(float CurrentPos, float Pos, float CurrentVel);
 		return ch;
 	}
 
-uint8_t PID(float pos_sp, float pos_cv)
+int16_t PID(float pos_sp, float pos_cv)
 {
   // Tinh sai so hien tai
   float error = pos_sp - pos_cv;
@@ -151,7 +155,7 @@ uint8_t PID(float pos_sp, float pos_cv)
   float derivative = Kd * (error - prev_error) / dt;
 
   // Tinh MV
-  uint8_t mv = (uint8_t)(proportional + integral + derivative);
+  uint8_t mv = (int16_t)(proportional + integral + derivative);
 
   // Cap nhat gia tri error
   prev_error = error;
@@ -405,7 +409,7 @@ int SetVelHigh(float CurrentPos, float Pos, float CurrentVel)
 void test_dc_motor_on(void)
 {
   // Turn on PC3
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
 
   // Turn on PWM
   __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,99); // set pwm
@@ -478,21 +482,19 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    // if (run == true)
-    // {
-    //   float setpoint_rad = 400;
-    //   setpoint_rad = (setpoint_rad * 2 * pi )/ 60.0;
+    if (run == true)
+    {
+      float setpoint_rad = (setpoint * 2.0 * pi )/ 60.0;
 
-    //   float cv_rad =  (float)((RealVel * 2 * pi )/ 60.0);
+      cv_rad =  (float)((RealVel * 2.0 * pi )/ 60.0);
 
-    //   uint8_t mv_pwm = PID(setpoint_rad, cv_rad);
-    //   test_motor_control(RIGHT_DIRECTION, mv_pwm);
-    // }
-    // else
-    // {
-    //   test_dc_motor_off();
-    // }
-    test_dc_motor_on();
+      mv_pwm = PID(setpoint_rad, cv_rad);
+      test_motor_control(LEFT_DIRECTION, (uint8_t)mv_pwm);
+    }
+    else
+    {
+      test_dc_motor_off();
+    }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
