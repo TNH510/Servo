@@ -59,9 +59,16 @@
 #define pi 3.1415
 #define p2r pi/2000
 
-#define Kp 11.246
+// PID vi tri
+// #define Kp 11.246
+// #define Ki 0
+// #define Kd 0.11246
+// #define dt 0.005
+
+// PID van toc
+#define Kp 10 
 #define Ki 0
-#define Kd 0.11246
+#define Kd 0
 #define dt 0.005
 
 #define MAX_PWM 99
@@ -135,9 +142,9 @@ uint8_t PID(float pos_sp, float pos_cv)
 {
   // Tinh sai so hien tai
   float error = pos_sp - pos_cv;
+  float proportional = Kp * error;
 
   // Tinh sai so tuong lai
-  float proportional = Kp * error;
   integral += Ki * error * dt;
 
   // Tinh sai so qua khu 
@@ -417,23 +424,11 @@ void test_dc_motor_off(void)
   __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,0); // set pwm
 }
 
-void test_motor_control(enum_dir_t direction, uint8_t pwm, uint32_t time)
+void test_motor_control(enum_dir_t direction, uint8_t pwm)
 {
   // Turn on PC3
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, (uint8_t)(direction));
-
-  // Turn on PWM
-  if (pwm > 100) 
-  {
-    pwm = 100;
-  }
-  else if (pwm < 0)
-  {
-    pwm = 0;
-  }
   __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,pwm); // set pwm
-  HAL_Delay(time);
-  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,0); // set pwm
 }
 
 /* USER CODE END 0 */
@@ -483,14 +478,21 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    if (run == true)
-    {
-      test_dc_motor_on();
-    }
-    else
-    {
-      test_dc_motor_off();
-    }
+    // if (run == true)
+    // {
+    //   float setpoint_rad = 400;
+    //   setpoint_rad = (setpoint_rad * 2 * pi )/ 60.0;
+
+    //   float cv_rad =  (float)((RealVel * 2 * pi )/ 60.0);
+
+    //   uint8_t mv_pwm = PID(setpoint_rad, cv_rad);
+    //   test_motor_control(RIGHT_DIRECTION, mv_pwm);
+    // }
+    // else
+    // {
+    //   test_dc_motor_off();
+    // }
+    test_dc_motor_on();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
