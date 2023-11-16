@@ -360,8 +360,8 @@ namespace DC
 
         private void btSetPoint_Click(object sender, EventArgs e)
         {
-            set_pos = Convert.ToDouble(txtPosition.Text);
-            set_vel = Convert.ToDouble(txtVelocity.Text);
+            //set_pos = Convert.ToDouble(txtPosition.Text);
+            //set_vel = Convert.ToDouble(txtVelocity.Text);
             SerialPort.Write(txtPosition.Text + "s");
             SerialPort.Write(txtVelocity.Text + "v");
             //SerialPort.Write(txtKpSet.Text + "p");
