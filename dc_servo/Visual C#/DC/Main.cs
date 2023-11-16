@@ -509,6 +509,11 @@ namespace DC
 
         }
 
+        private void GraphPos_Load(object sender, EventArgs e)
+        {
+
+        }
+
         private void TimerGraph_Tick(object sender, EventArgs e)
         {
             ZedGraph_Draw();

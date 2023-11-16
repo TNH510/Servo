@@ -365,7 +365,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {	// ngat timer 4 ti
 
     if (run == true)
     {
-      setpoint_rad = (setpoint * 2.0 * pi )/ 60.0;
+      setpoint_rad = (setpoint * 2.0 * pi )/ 60.0 - 15.0;
 
       cv_rad =  (float)((RealVel * 2.0 * pi )/ 60.0);
 
