@@ -66,10 +66,10 @@
 // #define dt 0.005
 
 // PID van toc
-#define Kp 0.8 
-#define Ki 0.1
-#define Kd 0
-#define dt 0.005
+float Kp = 1.0; 
+float Ki = 0.3;
+float Kd = 0.0;
+float dt = 0.005;
 
 #define MAX_PWM 99
 #define MIN_PWM 0
@@ -78,6 +78,7 @@
 float integral = 0.0;  // Giá trị tích phân
 float prev_error = 0.0;  // Sai số trước đó
 int16_t mv_pwm;
+float setpoint_rad;
 
 /* USER CODE END PD */
 
@@ -105,6 +106,7 @@ char Rx_indx, Rx_Buffer[20],Rx_data[2];
 
 float cv_rad;
 float setpoint = 380;
+float error, proportional, derivative;
 
 typedef enum
 {
@@ -142,23 +144,43 @@ int SetVelHigh(float CurrentPos, float Pos, float CurrentVel);
 		return ch;
 	}
 
+/**
+ * @brief Turn off DC motor and test
+ * 
+ */
+void test_dc_motor_off(void)
+{
+  // Turn on PC3
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+
+  // Turn on PWM
+  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,0); // set pwm
+}
+
+void test_motor_control(enum_dir_t direction, int16_t pwm)
+{
+  // Turn on PC3
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, (uint8_t)(direction));
+  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,pwm); // set pwm
+}	
+	
 int16_t PID(float pos_sp, float pos_cv)
 {
   // Tinh sai so hien tai
-  float error = pos_sp - pos_cv;
-  float proportional = Kp * error;
+  error = pos_sp - pos_cv;
+  //proportional = Kp * error;
 
   // Tinh sai so tuong lai
-  integral += Ki * error * dt;
+  integral = integral + error * dt;
 
   // Tinh sai so qua khu 
-  float derivative = Kd * (error - prev_error) / dt;
+  //derivative = Kd * (error - prev_error) / dt;
 
   // Tinh MV
-  uint8_t mv = (int16_t)(proportional + integral + derivative);
+  int16_t mv = (int16_t)(Kp*error + Ki*integral);
 
   // Cap nhat gia tri error
-  prev_error = error;
+  //prev_error = error;
 
   // Anti-windup
   if (mv > 99) 
@@ -188,6 +210,24 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                 run =false;
                 break;
             
+            case 'p':
+                Kp = atoi(Rx_Buffer);
+                memset(Rx_Buffer, 0, sizeof(Rx_Buffer));
+                Rx_indx = 0;
+                break;
+              
+            case 'i':
+                Ki = atoi(Rx_Buffer);
+                memset(Rx_Buffer, 0, sizeof(Rx_Buffer));
+                Rx_indx = 0;
+                break;
+
+            case 'd':
+                Kd = atoi(Rx_Buffer);
+                memset(Rx_Buffer, 0, sizeof(Rx_Buffer));
+                Rx_indx = 0;
+                break;
+            
             /* dong co chay */
             case 'r':
                 run = true;
@@ -201,7 +241,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
                 Rx_indx = 0;
                 break;
             case 'v':
-                DesiredSpeed = atoi(Rx_Buffer);
+                //DesiredSpeed = atoi(Rx_Buffer);
+                setpoint = atoi(Rx_Buffer);
                 memset(Rx_Buffer, 0, sizeof(Rx_Buffer));
                 Rx_indx = 0;
                 break;    
@@ -321,28 +362,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {	// ngat timer 4 ti
 		CntVel = 0;
 		RealVel = Cnttmp*6;										//RPM
 		CurVel = Cnttmp*pi/5;								//rad/s
-		switch(Speedmode) {
-			case 1:
-				pwm = SetVelLow(CurPos,DesiredPos);
-				break;
-			case 2:
-				pwm = SetVelMid(CurPos,DesiredPos,CurVel);
-				break;
-			case 4:
-				pwm = SetVelHigh(CurPos,DesiredPos,CurVel);
-				break;				
-		}
-		// // dir = 1, CurPos<0
-		// if (dir==1){
-		// //	__HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_3,0); // dir
-		// 		HAL_GPIO_WritePin(GPIOC,GPIO_PIN_3, GPIO_PIN_SET); 
-		// 	__HAL_TIM_SetCompare(&htim3,TIM_CHANNEL_2,pwm); 	// set pwm
-		// }
-		// else {
-		// 		HAL_GPIO_WritePin(GPIOC,GPIO_PIN_3, GPIO_PIN_RESET); 
-		// 	//__HAL_TIM_SetCompare(&htim2, TIM_CHANNEL_3,0); // set pwm
-		// 	__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,pwm); // set pwm
-		// }	
+
+    if (run == true)
+    {
+      setpoint_rad = (setpoint * 2.0 * pi )/ 60.0;
+
+      cv_rad =  (float)((RealVel * 2.0 * pi )/ 60.0);
+
+      mv_pwm = PID(setpoint_rad, cv_rad);
+      test_motor_control(LEFT_DIRECTION, mv_pwm);
+    }
+    else
+    {
+      test_dc_motor_off();
+    }
+
 		return;
 	}
 	if(htim->Instance==TIM5)
@@ -415,26 +449,6 @@ void test_dc_motor_on(void)
   __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,99); // set pwm
 }
 
-/**
- * @brief Turn off DC motor and test
- * 
- */
-void test_dc_motor_off(void)
-{
-  // Turn on PC3
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-
-  // Turn on PWM
-  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,0); // set pwm
-}
-
-void test_motor_control(enum_dir_t direction, uint8_t pwm)
-{
-  // Turn on PC3
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, (uint8_t)(direction));
-  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,pwm); // set pwm
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -482,19 +496,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    if (run == true)
-    {
-      float setpoint_rad = (setpoint * 2.0 * pi )/ 60.0;
 
-      cv_rad =  (float)((RealVel * 2.0 * pi )/ 60.0);
-
-      mv_pwm = PID(setpoint_rad, cv_rad);
-      test_motor_control(LEFT_DIRECTION, (uint8_t)mv_pwm);
-    }
-    else
-    {
-      test_dc_motor_off();
-    }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
