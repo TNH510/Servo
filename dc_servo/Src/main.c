@@ -166,23 +166,12 @@ void test_motor_control(enum_dir_t direction, int16_t pwm)
 	
 int16_t PID(float pos_sp, float pos_cv)
 {
-  // Tinh sai so hien tai
   error = pos_sp - pos_cv;
-  //proportional = Kp * error;
 
-  // Tinh sai so tuong lai
   integral = integral + error * dt;
 
-  // Tinh sai so qua khu 
-  //derivative = Kd * (error - prev_error) / dt;
-
-  // Tinh MV
   int16_t mv = (int16_t)(Kp*error + Ki*integral);
 
-  // Cap nhat gia tri error
-  //prev_error = error;
-
-  // Anti-windup
   if (mv > 99) 
   {
     mv = 99;
@@ -192,7 +181,6 @@ int16_t PID(float pos_sp, float pos_cv)
     mv = 0;
   }
 
-  // Return value
   return mv;
 }
 
@@ -366,9 +354,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {	// ngat timer 4 ti
     if (run == true)
     {
       setpoint_rad = (setpoint * 2.0 * pi )/ 60.0 - 15.0;
-
       cv_rad =  (float)((RealVel * 2.0 * pi )/ 60.0);
-
       mv_pwm = PID(setpoint_rad, cv_rad);
       test_motor_control(LEFT_DIRECTION, mv_pwm);
     }

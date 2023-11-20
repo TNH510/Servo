@@ -59,16 +59,9 @@
 #define pi 3.1415
 #define p2r pi/2000
 
-// PID vi tri
-// #define Kp 11.246
-// #define Ki 0
-// #define Kd 0.11246
-// #define dt 0.005
-
-// PID van toc
-float Kp = 1.0; 
-float Ki = 0.3;
-float Kd = 0.0;
+float Kp = 2.0; 
+float Ki = 0.0;
+float Kd = 0.1;
 float dt = 0.005;
 
 #define MAX_PWM 99
@@ -167,23 +160,16 @@ void test_motor_control(enum_dir_t direction, int16_t pwm)
 	
 int16_t PID(float pos_sp, float pos_cv)
 {
-  // Tinh sai so hien tai
   error = pos_sp - pos_cv;
-  //proportional = Kp * error;
 
-  // Tinh sai so tuong lai
   integral = integral + error * dt;
 
-  // Tinh sai so qua khu 
   derivative = (error - prev_error) / dt;
 
-  // Tinh MV
   int16_t mv = (int16_t)(Kp*error + Ki*integral + Kd*derivative);
 
-  // Cap nhat gia tri error
   prev_error = error;
 
-  // Anti-windup
   if (mv > 99) 
   {
     mv = 99;
@@ -366,7 +352,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {	// ngat timer 4 ti
 
     if (run == true)
     {
-      //setpoint_rad = setpoint_mm * pi / 5.0;
       mv_pwm = PID(setpoint_rad, CurPos);
 
       if (mv_pwm > 0)
