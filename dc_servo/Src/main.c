@@ -59,12 +59,6 @@
 #define pi 3.1415
 #define p2r pi/2000
 
-// PID vi tri
-// #define Kp 11.246
-// #define Ki 0
-// #define Kd 0.11246
-// #define dt 0.005
-
 // PID van toc
 float Kp = 1.0; 
 float Ki = 0.3;
@@ -92,8 +86,6 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim5;
-
-UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 int32_t PosCnt,Cnttmp,speed;
@@ -132,18 +124,6 @@ int SetVelHigh(float CurrentPos, float Pos, float CurrentVel);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#ifdef __GNUC__
-	#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-#else 
-	#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-	#define GETCHAR_PROTOTYPE int fgetc(FILE *f)
-#endif 
-	PUTCHAR_PROTOTYPE
-	{
-		HAL_UART_Transmit(&huart1, (uint8_t*)&ch,1,100);
-		return ch;
-	}
-
 /**
  * @brief Turn off DC motor and test
  * 
@@ -176,89 +156,19 @@ int16_t PID(float pos_sp, float pos_cv)
   {
     mv = 99;
   }
-  else if (mv < 0)
+  else if (mv < -99)
   {
-    mv = 0;
+    mv = -99;
   }
 
   return mv;
 }
 
-	// Ham ngat Uart
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-	{
-		uint8_t i;
-		if(huart->Instance == USART1) //uart1
-		{
-				if(Rx_indx==0) {for (i=0;i<20;i++) Rx_Buffer[i] = 0;}
-			
-		switch(Rx_data[0]) {
-            /* dung dong co */
-            case 'e':
-                run =false;
-                break;
-            
-            case 'p':
-                Kp = atoi(Rx_Buffer);
-                memset(Rx_Buffer, 0, sizeof(Rx_Buffer));
-                Rx_indx = 0;
-                break;
-              
-            case 'i':
-                Ki = atoi(Rx_Buffer);
-                memset(Rx_Buffer, 0, sizeof(Rx_Buffer));
-                Rx_indx = 0;
-                break;
-
-            case 'd':
-                Kd = atoi(Rx_Buffer);
-                memset(Rx_Buffer, 0, sizeof(Rx_Buffer));
-                Rx_indx = 0;
-                break;
-            
-            /* dong co chay */
-            case 'r':
-                run = true;
-                break;
-            case 'b':
-//								reset();
-								break;
-            case 's':
-                DesiredPos = atoi(Rx_Buffer);
-                memset(Rx_Buffer, 0, sizeof(Rx_Buffer));
-                Rx_indx = 0;
-                break;
-            case 'v':
-                //DesiredSpeed = atoi(Rx_Buffer);
-                setpoint = atoi(Rx_Buffer);
-                memset(Rx_Buffer, 0, sizeof(Rx_Buffer));
-                Rx_indx = 0;
-                break;    
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            case '.':
-            case '-':
-                Rx_Buffer[Rx_indx++] |= Rx_data[0];
-                break; 
-            default:
-                break;
-        }
-				HAL_UART_Receive_IT(&huart1,(uint8_t*)Rx_data,1);
-		}
-	}
 
 void EXTI9_5_IRQHandler(void)	// doc encoder	
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
-unsigned char State0;
+  unsigned char State0;
 	State0 = (State0<<1) | HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4);
 	State0 = (State0<<1) | HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6);
 	State0 = State0&0x03;
@@ -345,7 +255,6 @@ unsigned char State1;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {	// ngat timer 4 tinh van toc
 	if(htim->Instance==TIM4)	// ngat do timer 4	5ms
 	{
-		CurPos = PosCnt*2*pi+CountValue*p2r;	// Position calculation
 		Cnttmp = CntVel;
 		CntVel = 0;
 		RealVel = Cnttmp*6;										//RPM
@@ -353,8 +262,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {	// ngat timer 4 ti
 
     if (run == true)
     {
-      setpoint_rad = (setpoint * 2.0 * pi )/ 60.0 - 15.0;
-      cv_rad =  (float)((RealVel * 2.0 * pi )/ 60.0);
+      setpoint_rad = (setpoint * 2.0 * pi ) / 60.0;
+      cv_rad =  (float)((RealVel * 2.0 * pi ) / 60.0);
       mv_pwm = PID(setpoint_rad, cv_rad);
       test_motor_control(LEFT_DIRECTION, mv_pwm);
     }
@@ -364,76 +273,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {	// ngat timer 4 ti
     }
 
 		return;
-	}
-	if(htim->Instance==TIM5)
-	{
-//		ut=5*pi*time;	// ham chay theo thoi gian u(t)=5*pi(t);	// timer 5
-//		time+=0.01;	
-			tick++;
-			if (run==1) {
-				if(DesiredSpeed<=340) Speedmode = 1;
-				else if((DesiredSpeed>340)&&(DesiredSpeed<750))	Speedmode = 2;
-				else if(DesiredSpeed>=750) Speedmode = 4;
-				}
-			if (run==0){ 
-					pwm = 0;
-					Speedmode =0;
-			}
-			if ((run==1)&&(tick==5)){
-				tick=0;
-				printf("V%d\r \n",RealVel);
-				printf("P%f\r \n",CurPos);
-			}
-	}
-	
-}
-int SetVelLow(float CurrentPos, float Pos)
-{
-	HILIM=10,LOLIM=0;
-	float uout;
-	
-	// STUDENTS ADD CODE FOR SLOW SPEED HERE
-	
-	if (uout>HILIM) uout=HILIM;
-	else if(uout<LOLIM) uout=LOLIM;
-	return uout;
-}
-int SetVelMid(float CurrentPos, float Pos, float CurrentVel)
-{
-	HILIM=20,LOLIM=0;
-	float uout;
-	
-	// STUDENTS ADD CODES FOR MIDDLE SPEED HERE
-	
-	if (uout>HILIM) uout=HILIM;
-	else if(uout<LOLIM) uout=LOLIM;
-	return uout;
-}
-int SetVelHigh(float CurrentPos, float Pos, float CurrentVel)
-{
-	HILIM=99,LOLIM=0;
-	float uout;
-	
-	// STUDENTS ADD CODES FOR HIGH SPEED HERE
-	
-	if (uout>HILIM) uout=HILIM;
-	else if( uout<LOLIM) uout=LOLIM;
-	
-	return uout;
+	}	
 }
 
 /**
  * @brief Turn on DC motor and test
  * 
  */
-void test_dc_motor_on(void)
-{
-  // Turn on PC3
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-
-  // Turn on PWM
-  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,99); // set pwm
-}
 
 /* USER CODE END 0 */
 
