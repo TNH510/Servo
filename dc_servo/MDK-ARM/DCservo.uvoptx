@@ -168,42 +168,47 @@
         <Ww>
           <count>3</count>
           <WinNumber>1</WinNumber>
-          <ItemText>setpoint*2*3.14/60.0</ItemText>
+          <ItemText>CurVel</ItemText>
         </Ww>
         <Ww>
           <count>4</count>
           <WinNumber>1</WinNumber>
-          <ItemText>CurVel</ItemText>
+          <ItemText>CntVel,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>5</count>
           <WinNumber>1</WinNumber>
-          <ItemText>CntVel,0x0A</ItemText>
+          <ItemText>RealVel,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>6</count>
           <WinNumber>1</WinNumber>
-          <ItemText>RealVel,0x0A</ItemText>
+          <ItemText>tick,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>7</count>
           <WinNumber>1</WinNumber>
-          <ItemText>tick,0x0A</ItemText>
+          <ItemText>Kp</ItemText>
         </Ww>
         <Ww>
           <count>8</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Kp</ItemText>
+          <ItemText>Ki</ItemText>
         </Ww>
         <Ww>
           <count>9</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Ki</ItemText>
+          <ItemText>Kd</ItemText>
         </Ww>
         <Ww>
           <count>10</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Kd</ItemText>
+          <ItemText>setpoint</ItemText>
+        </Ww>
+        <Ww>
+          <count>11</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>\\DCservo\../Src/main.c\cv_rad</ItemText>
         </Ww>
       </WatchWindow1>
       <Tracepoint>
